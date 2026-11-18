@@ -107,6 +107,13 @@ First deploy of a new project, from `apps/api`:
 8. Secrets: put them in `../secrets/<name>/prod.env` (a new `BETTER_AUTH_SECRET`, not the local one, plus the OAuth keys), then `pnpm secrets:push` from the repo root.
 9. Add `https://<your url>/api/auth/callback/google` and `.../github` to the OAuth apps.
 
+**Automatic deploys:** after the first deploy, every push to `main` runs the `deploy` job in CI once the checks pass: migrations on Neon, Hyperdrive URL, `wrangler deploy`, then Worker secrets. It reads every value from the private secrets repo, so it needs:
+
+- repo secret `SECRETS_REPO_TOKEN`: the GitHub token from `secrets/ci.env` (`GH_DEPLOY_TOKEN`)
+- repo variable `DEPLOY=cloudflare` (a new repo from this template does not deploy until it is set)
+
+Changing `prod.env` in the secrets repo starts the same job.
+
 Sign in stays passwordless (magic link or OAuth) because the free Workers plan allows 10 ms of CPU per request, which password hashing goes over. `MAIL_PROVIDER` is `none` until Resend is set up, which hides the email option.
 
 ## Brand

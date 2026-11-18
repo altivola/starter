@@ -81,7 +81,7 @@ The web app and the API always share one origin: the Vite proxy in dev, nginx in
 
 ## Using this template for a new project
 
-1. `gh repo create jabbar-hafizh/<name> --template jabbar-hafizh/starter --clone`
+1. `gh repo create altivola/altivola-<thing> --template altivola/starter --public --clone`
 2. Replace `App` in `apps/web/index.html`, `apps/web/vite.config.ts` (PWA manifest), `apps/web/src/routes/root.tsx`, and `apps/api/src/app.ts` (`openapiInfo`).
 3. Replace the Worker name, Hyperdrive id, queue name, and `BETTER_AUTH_URL` in `apps/api/wrangler.jsonc` (see Deploy).
 4. Delete the notes example once you have your own feature (procedure, migration, test, page).
@@ -109,7 +109,7 @@ First deploy of a new project, from `apps/api`:
 
 **Automatic deploys:** after the first deploy, every push to `main` runs the `deploy` job in CI once the checks pass: migrations on Neon, Hyperdrive URL, `wrangler deploy`, then Worker secrets. It reads every value from the private secrets repo, so it needs:
 
-- repo secret `SECRETS_REPO_TOKEN`: the GitHub token from `secrets/ci.env` (`GH_DEPLOY_TOKEN`)
+- secret `SECRETS_REPO_TOKEN`: set once on the `altivola` org, shared by every repo (the GitHub token `GH_DEPLOY_TOKEN` from `secrets/ci.env`)
 - repo variable `DEPLOY=cloudflare` (a new repo from this template does not deploy until it is set)
 
 Changing `prod.env` in the secrets repo starts the same job.

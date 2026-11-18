@@ -55,7 +55,7 @@ jobs:
       - name: Check out the private secrets repo
         uses: actions/checkout@v5
         with:
-          repository: jabbar-hafizh/secrets
+          repository: altivola/secrets
           token: ${{ secrets.SECRETS_REPO_TOKEN }}
           path: .secrets
 

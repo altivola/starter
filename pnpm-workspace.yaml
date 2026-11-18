@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# pnpm only runs install scripts for packages listed here.
+allowBuilds:
+  esbuild: true
+  # Cloudflare's local runtime, used by `wrangler dev`.
+  workerd: true
+  # Optional native speedups pulled in by testcontainers and Sentry; not needed.
+  cpu-features: false
+  ssh2: false
+  protobufjs: false

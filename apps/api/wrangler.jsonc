@@ -1,0 +1,38 @@
+// Cloudflare Workers config (free phase). See README "Deploy to Cloudflare".
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "app-api",
+  "main": "src/cloudflare/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // From `wrangler hyperdrive create app-db --connection-string=<neon url>`.
+      "id": "00000000000000000000000000000000",
+      // Used by `wrangler dev`. Matches compose.yaml with the default DB_PORT.
+      "localConnectionString": "postgres://app:app@localhost:5432/app"
+    }
+  ],
+
+  "queues": {
+    "producers": [{ "binding": "JOBS", "queue": "app-jobs" }],
+    "consumers": [{ "queue": "app-jobs", "max_retries": 3 }]
+  },
+
+  // Non secret settings. Secrets (BETTER_AUTH_SECRET, RESEND_API_KEY, OAuth) go in
+  // `wrangler secret put <NAME>`, and in .dev.vars for `wrangler dev`.
+  "vars": {
+    "BETTER_AUTH_URL": "https://example.com",
+    "MAIL_PROVIDER": "resend",
+    "MAIL_FROM": "App <noreply@example.com>"
+  }
+
+  // Serve the API on the same origin as the Pages site. Uncomment once the domain is on Cloudflare.
+  // "routes": [
+  //   { "pattern": "example.com/api/*", "zone_name": "example.com" },
+  //   { "pattern": "example.com/rpc/*", "zone_name": "example.com" }
+  // ]
+}

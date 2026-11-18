@@ -1,0 +1,7 @@
+{
+  "name": "@app/ui",
+  "private": true,
+  "exports": {
+    "./tokens.css": "./tokens.css"
+  }
+}

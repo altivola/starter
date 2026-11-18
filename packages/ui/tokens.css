@@ -1,0 +1,58 @@
+/*
+ * Personal brand tokens: black, yellow #FAFB03, white (Opini.id style).
+ * Yellow is a fill with black text, never text on white (contrast 1.1:1).
+ * Names follow shadcn/ui so its components pick these up directly.
+ */
+:root {
+  --radius: 0.625rem;
+
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #ececec;
+  --secondary-foreground: #000000;
+  --muted: #ececec;
+  --muted-foreground: #444444;
+  --accent: #fafb03;
+  --accent-foreground: #000000;
+  --destructive: #d92d20;
+
+  --border: #dfdfdf;
+  --input: #c4c4c4;
+  --ring: #000000;
+
+  --highlight: #fafb03;
+  --highlight-foreground: #000000;
+}
+
+.dark {
+  --background: #000000;
+  --foreground: #ffffff;
+  --card: #111111;
+  --card-foreground: #ffffff;
+  --popover: #111111;
+  --popover-foreground: #ffffff;
+
+  --primary: #fafb03;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ffffff;
+  --muted: #1a1a1a;
+  --muted-foreground: #c4c4c4;
+  --accent: #fafb03;
+  --accent-foreground: #000000;
+  --destructive: #f97066;
+
+  --border: #333333;
+  --input: #444444;
+  --ring: #fafb03;
+
+  --highlight: #fafb03;
+  --highlight-foreground: #000000;
+}

@@ -24,7 +24,7 @@ Needs Node 24+, Docker, and corepack (comes with Node).
 ```sh
 corepack enable
 pnpm install
-cp .env.example .env        # then set BETTER_AUTH_SECRET: openssl rand -base64 32
+pnpm env:pull               # .env from my private secrets repo, or: cp .env.example .env
 docker compose up -d        # Postgres, migrations, Mailpit
 pnpm dev                    # API on :3000, web on :5173
 ```
@@ -35,17 +35,19 @@ If port 5432 is already taken, set `DB_PORT` in `.env` and use the same port in 
 
 ## Commands
 
-| Command                                   | What it does                                                    |
-| ----------------------------------------- | --------------------------------------------------------------- |
-| `pnpm dev`                                | API and web with hot reload                                     |
-| `docker compose up -d`                    | Postgres + migrations + Mailpit                                 |
-| `docker compose --profile app up --build` | Everything in Docker, like production, on http://localhost:8080 |
-| `pnpm lint` / `pnpm format`               | Biome check / fix                                               |
-| `pnpm typecheck`                          | TypeScript in every package                                     |
-| `pnpm test`                               | Integration tests against a real Postgres (needs Docker)        |
-| `pnpm build`                              | Build the API bundle and the web app                            |
-| `pnpm openapi`                            | Write `apps/api/openapi.json` (CI fails if it is out of date)   |
-| `pnpm --filter @app/server dev:worker`    | Run the API in the local Workers runtime                        |
+| Command                                   | What it does                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------- |
+| `pnpm dev`                                | API and web with hot reload                                           |
+| `docker compose up -d`                    | Postgres + migrations + Mailpit                                       |
+| `docker compose --profile app up --build` | Everything in Docker, like production, on http://localhost:8080       |
+| `pnpm lint` / `pnpm format`               | Biome check / fix                                                     |
+| `pnpm typecheck`                          | TypeScript in every package                                           |
+| `pnpm test`                               | Integration tests against a real Postgres (needs Docker)              |
+| `pnpm build`                              | Build the API bundle and the web app                                  |
+| `pnpm openapi`                            | Write `apps/api/openapi.json` (CI fails if it is out of date)         |
+| `pnpm --filter @app/server dev:worker`    | Run the API in the local Workers runtime                              |
+| `pnpm env:pull`                           | Copy `dev.env` from the secrets repo (`../secrets/<name>/`) to `.env` |
+| `pnpm secrets:push`                       | Upload `prod.env` from the secrets repo to the Worker as secrets      |
 
 ## Layout
 
@@ -102,7 +104,7 @@ First deploy of a new project, from `apps/api`:
    `docker run --rm -v "$PWD/../../packages/db/migrations:/migrations:ro" -e DATABASE_URL="<neon url>" ghcr.io/amacneil/dbmate:2 --no-dump-schema --migrations-dir /migrations up`
 6. Set `BETTER_AUTH_URL` in `wrangler.jsonc` to `https://<worker name>.<your subdomain>.workers.dev`.
 7. `pnpm run deploy` (builds the web app, then `wrangler deploy`).
-8. Secrets: `pnpm exec wrangler secret put BETTER_AUTH_SECRET` (a new value, not the local one), plus the OAuth keys.
+8. Secrets: put them in `../secrets/<name>/prod.env` (a new `BETTER_AUTH_SECRET`, not the local one, plus the OAuth keys), then `pnpm secrets:push` from the repo root.
 9. Add `https://<your url>/api/auth/callback/google` and `.../github` to the OAuth apps.
 
 Sign in stays passwordless (magic link or OAuth) because the free Workers plan allows 10 ms of CPU per request, which password hashing goes over. `MAIL_PROVIDER` is `none` until Resend is set up, which hides the email option.

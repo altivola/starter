@@ -7,9 +7,11 @@ on:
   # Started by the private secrets repo when this project's prod.env changes.
   workflow_dispatch:
 
+# Only pull requests cancel older runs. On main a newer run waits, so a deploy is never
+# stopped halfway through migrations.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   check:

@@ -8,11 +8,11 @@ export type Context = {
   auth: Auth
   jobs: Jobs
   headers: Headers
-  // OAuth providers that have credentials set, so the login page only shows working buttons.
+  // Sign in methods that are set up, so the login page only shows working options.
   authProviders: AuthProvider[]
 }
 
-export type AuthProvider = 'google' | 'github'
+export type AuthProvider = 'email' | 'google' | 'github'
 
 export const pub = os.$context<Context>()
 

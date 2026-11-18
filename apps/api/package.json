@@ -8,7 +8,8 @@
     "start": "node --enable-source-maps dist/node.js",
     "openapi": "tsx scripts/openapi.ts",
     "typecheck": "tsc -p . && wrangler types src/cloudflare/worker-configuration.d.ts > /dev/null && tsc -p tsconfig.worker.json",
-    "dev:worker": "wrangler dev"
+    "dev:worker": "wrangler dev",
+    "deploy": "pnpm --filter @app/web build && wrangler deploy"
   },
   "dependencies": {
     "@app/api": "workspace:*",

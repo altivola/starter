@@ -1,38 +1,42 @@
-// Cloudflare Workers config (free phase). See README "Deploy to Cloudflare".
+// Cloudflare Workers config (free phase). One Worker serves the web app (static assets)
+// and the API, so both share one origin on workers.dev without a custom domain.
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "app-api",
+  "name": "starter",
   "main": "src/cloudflare/worker.ts",
   "compatibility_date": "2026-11-01",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
+  // The built web app. Only /api and /rpc reach the Worker code; every other path is a
+  // file from here, and unknown paths get index.html so client side routing works.
+  "assets": {
+    "directory": "../web/dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/rpc/*"]
+  },
+
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      // From `wrangler hyperdrive create app-db --connection-string=<neon url>`.
-      "id": "00000000000000000000000000000000",
+      // From `wrangler hyperdrive create <name> --connection-string=<neon url>`.
+      "id": "6c3737edb6374b69b14225094fee9a10",
       // Used by `wrangler dev`. Matches compose.yaml with the default DB_PORT.
       "localConnectionString": "postgres://app:app@localhost:5432/app"
     }
   ],
 
   "queues": {
-    "producers": [{ "binding": "JOBS", "queue": "app-jobs" }],
-    "consumers": [{ "queue": "app-jobs", "max_retries": 3 }]
+    "producers": [{ "binding": "JOBS", "queue": "starter-jobs" }],
+    "consumers": [{ "queue": "starter-jobs", "max_retries": 3 }]
   },
 
-  // Non secret settings. Secrets (BETTER_AUTH_SECRET, RESEND_API_KEY, OAuth) go in
+  // Non secret settings. Secrets (BETTER_AUTH_SECRET, RESEND_API_KEY, OAuth keys) go in
   // `wrangler secret put <NAME>`, and in .dev.vars for `wrangler dev`.
   "vars": {
-    "BETTER_AUTH_URL": "https://example.com",
-    "MAIL_PROVIDER": "resend",
+    "BETTER_AUTH_URL": "https://starter.jabbar-hafizh.workers.dev",
+    // "none" until Resend is set up; sign in is Google/GitHub only meanwhile.
+    "MAIL_PROVIDER": "none",
     "MAIL_FROM": "App <noreply@example.com>"
   }
-
-  // Serve the API on the same origin as the Pages site. Uncomment once the domain is on Cloudflare.
-  // "routes": [
-  //   { "pattern": "example.com/api/*", "zone_name": "example.com" },
-  //   { "pattern": "example.com/rpc/*", "zone_name": "example.com" }
-  // ]
 }

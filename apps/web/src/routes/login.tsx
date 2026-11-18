@@ -24,6 +24,8 @@ const providerLabels = { google: 'Google', github: 'GitHub' } as const
 function LoginPage() {
   const [email, setEmail] = useState('')
   const providers = useQuery(orpc.authProviders.queryOptions())
+  const emailEnabled = providers.data?.includes('email') ?? false
+  const oauthProviders = providers.data?.filter((p) => p !== 'email') ?? []
 
   const magicLink = useMutation({
     mutationFn: async () => {
@@ -36,10 +38,12 @@ function LoginPage() {
     <Card className="mx-auto mt-12 max-w-sm">
       <CardHeader>
         <CardTitle>Sign in</CardTitle>
-        <CardDescription>We will email you a link. No password needed.</CardDescription>
+        <CardDescription>
+          {emailEnabled ? 'We will email you a link. No password needed.' : 'Choose an account to continue.'}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {magicLink.isSuccess ? (
+        {!emailEnabled ? null : magicLink.isSuccess ? (
           <p className="text-sm">
             Check <strong>{email}</strong> for your sign in link.
             {import.meta.env.DEV && (
@@ -79,7 +83,7 @@ function LoginPage() {
           </form>
         )}
 
-        {providers.data?.map((provider) => (
+        {oauthProviders.map((provider) => (
           <Button
             key={provider}
             variant="outline"

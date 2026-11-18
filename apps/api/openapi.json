@@ -42,7 +42,7 @@
     "/auth-providers": {
       "get": {
         "operationId": "authProviders",
-        "summary": "OAuth providers turned on",
+        "summary": "Sign in methods turned on",
         "tags": [
           "system"
         ],
@@ -55,6 +55,7 @@
                   "type": "array",
                   "items": {
                     "enum": [
+                      "email",
                       "google",
                       "github"
                     ],

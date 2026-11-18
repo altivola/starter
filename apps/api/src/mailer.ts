@@ -5,6 +5,12 @@ import type { Env } from './env.ts'
 export function createMailer(env: Env): SendEmail {
   const from = parseAddress(env.MAIL_FROM)
 
+  if (env.MAIL_PROVIDER === 'none') {
+    return async () => {
+      throw new Error('Email is turned off (MAIL_PROVIDER=none)')
+    }
+  }
+
   if (env.MAIL_PROVIDER === 'resend') {
     return async (message) => {
       const res = await fetch('https://api.resend.com/emails', {

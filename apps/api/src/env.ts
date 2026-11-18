@@ -11,7 +11,8 @@ export const Env = z.object({
   DATABASE_URL: z.string().min(1),
   BETTER_AUTH_SECRET: z.string().min(32, 'BETTER_AUTH_SECRET must be at least 32 characters'),
   BETTER_AUTH_URL: z.url(),
-  MAIL_PROVIDER: z.enum(['mailpit', 'resend']).default('mailpit'),
+  // "none" turns email sign in off, for example before Resend is set up.
+  MAIL_PROVIDER: z.enum(['mailpit', 'resend', 'none']).default('mailpit'),
   MAILPIT_URL: z.url().default('http://localhost:8025'),
   MAIL_FROM: z.string().default('App <noreply@example.com>'),
   RESEND_API_KEY: optional,
@@ -38,7 +39,8 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
 
 export function enabledProviders(env: Env): AuthProvider[] {
   const providers = oauthProviders(env)
-  return (['google', 'github'] as const).filter((name) => providers[name])
+  const oauth = (['google', 'github'] as const).filter((name) => providers[name])
+  return env.MAIL_PROVIDER === 'none' ? oauth : ['email', ...oauth]
 }
 
 export function oauthProviders(env: Env) {

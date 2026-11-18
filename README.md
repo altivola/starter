@@ -81,7 +81,7 @@ The web app and the API always share one origin: the Vite proxy in dev, nginx in
 
 1. `gh repo create jabbar-hafizh/<name> --template jabbar-hafizh/starter --clone`
 2. Replace `App` in `apps/web/index.html`, `apps/web/vite.config.ts` (PWA manifest), `apps/web/src/routes/root.tsx`, and `apps/api/src/app.ts` (`openapiInfo`).
-3. Replace `app-api` and `app-jobs` in `apps/api/wrangler.jsonc`.
+3. Replace the Worker name, Hyperdrive id, queue name, and `BETTER_AUTH_URL` in `apps/api/wrangler.jsonc` (see Deploy).
 4. Delete the notes example once you have your own feature (procedure, migration, test, page).
 5. Pick the license: MIT for libraries and CLIs, AGPL for apps people can self host.
 6. Turn on the Renovate GitHub app for the repo.
@@ -90,7 +90,22 @@ The web app and the API always share one origin: the Vite proxy in dev, nginx in
 
 **Self host:** `docker compose --profile app up --build -d` behind a reverse proxy with HTTPS. Set `BETTER_AUTH_URL` to the public URL and use `MAIL_PROVIDER=resend`.
 
-**Cloudflare (free phase):** the web app goes to Pages and the API to Workers on the same domain, with Neon Postgres through Hyperdrive. Login stays passwordless because the free Workers plan has a 10 ms CPU limit per request. The step by step guide comes with the first real deploy.
+**Cloudflare (free phase):** one Worker serves both the web app (static assets) and the API, so they share one origin on `workers.dev` with no custom domain. Postgres is Neon, reached through Hyperdrive. Live example: https://starter.jabbar-hafizh.workers.dev
+
+First deploy of a new project, from `apps/api`:
+
+1. `pnpm exec wrangler login`
+2. Create a Neon project (region closest to your users) and copy its direct connection string (pooling off).
+3. `pnpm exec wrangler hyperdrive create <name>-db --connection-string="<neon url>"` and put the id in `wrangler.jsonc`.
+4. `pnpm exec wrangler queues create <name>-jobs` and use that name in `wrangler.jsonc`.
+5. Run the migrations on Neon:
+   `docker run --rm -v "$PWD/../../packages/db/migrations:/migrations:ro" -e DATABASE_URL="<neon url>" ghcr.io/amacneil/dbmate:2 --no-dump-schema --migrations-dir /migrations up`
+6. Set `BETTER_AUTH_URL` in `wrangler.jsonc` to `https://<worker name>.<your subdomain>.workers.dev`.
+7. `pnpm run deploy` (builds the web app, then `wrangler deploy`).
+8. Secrets: `pnpm exec wrangler secret put BETTER_AUTH_SECRET` (a new value, not the local one), plus the OAuth keys.
+9. Add `https://<your url>/api/auth/callback/google` and `.../github` to the OAuth apps.
+
+Sign in stays passwordless (magic link or OAuth) because the free Workers plan allows 10 ms of CPU per request, which password hashing goes over. `MAIL_PROVIDER` is `none` until Resend is set up, which hides the email option.
 
 ## Brand
 

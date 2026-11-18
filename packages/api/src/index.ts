@@ -11,8 +11,8 @@ export const router = {
       return { ok: true }
     }),
   authProviders: pub
-    .route({ method: 'GET', path: '/auth-providers', summary: 'OAuth providers turned on', tags: ['system'] })
-    .output(z.array(z.enum(['google', 'github'])))
+    .route({ method: 'GET', path: '/auth-providers', summary: 'Sign in methods turned on', tags: ['system'] })
+    .output(z.array(z.enum(['email', 'google', 'github'])))
     .handler(({ context }) => context.authProviders),
   notes,
 }

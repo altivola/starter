@@ -34,7 +34,7 @@
   // Non secret settings. Secrets (BETTER_AUTH_SECRET, RESEND_API_KEY, OAuth keys) go in
   // `wrangler secret put <NAME>`, and in .dev.vars for `wrangler dev`.
   "vars": {
-    "BETTER_AUTH_URL": "https://starter.jabbar-hafizh.workers.dev",
+    "BETTER_AUTH_URL": "https://starter.altivola.workers.dev",
     // "none" until Resend is set up; sign in is Google/GitHub only meanwhile.
     "MAIL_PROVIDER": "none",
     "MAIL_FROM": "App <noreply@example.com>"

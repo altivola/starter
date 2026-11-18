@@ -92,7 +92,7 @@ The web app and the API always share one origin: the Vite proxy in dev, nginx in
 
 **Self host:** `docker compose --profile app up --build -d` behind a reverse proxy with HTTPS. Set `BETTER_AUTH_URL` to the public URL and use `MAIL_PROVIDER=resend`.
 
-**Cloudflare (free phase):** one Worker serves both the web app (static assets) and the API, so they share one origin on `workers.dev` with no custom domain. Postgres is Neon, reached through Hyperdrive. Live example: https://starter.jabbar-hafizh.workers.dev
+**Cloudflare (free phase):** one Worker serves both the web app (static assets) and the API, so they share one origin on `workers.dev` with no custom domain. Postgres is Neon, reached through Hyperdrive. Live example: https://starter.altivola.workers.dev
 
 First deploy of a new project, from `apps/api`:
 

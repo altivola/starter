@@ -1,5 +1,5 @@
 // Reads env values from my private secrets repo (Repo/Personal/secrets/<project>/).
-//   node scripts/secrets.ts pull   copies dev.env to .env
+//   node scripts/secrets.ts pull   copies local.env to .env
 //   node scripts/secrets.ts push   uploads prod.env to the Cloudflare Worker as secrets
 // Set SECRETS_DIR to use another folder.
 import { spawnSync } from 'node:child_process'
@@ -37,9 +37,9 @@ const command = process.argv[2]
 
 if (command === 'pull') {
   const target = join(root, '.env')
-  copyFileSync(need('dev.env'), target)
+  copyFileSync(need('local.env'), target)
   chmodSync(target, 0o600)
-  console.info(`Wrote .env from ${join(dir, 'dev.env')}. Restart pnpm dev to use it.`)
+  console.info(`Wrote .env from ${join(dir, 'local.env')}. Restart pnpm dev to use it.`)
 } else if (command === 'push') {
   const values = parseEnv(readFileSync(need('prod.env'), 'utf8'))
   const secrets = Object.fromEntries(

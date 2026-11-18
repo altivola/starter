@@ -35,19 +35,19 @@ If port 5432 is already taken, set `DB_PORT` in `.env` and use the same port in 
 
 ## Commands
 
-| Command                                   | What it does                                                          |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| `pnpm dev`                                | API and web with hot reload                                           |
-| `docker compose up -d`                    | Postgres + migrations + Mailpit                                       |
-| `docker compose --profile app up --build` | Everything in Docker, like production, on http://localhost:8080       |
-| `pnpm lint` / `pnpm format`               | Biome check / fix                                                     |
-| `pnpm typecheck`                          | TypeScript in every package                                           |
-| `pnpm test`                               | Integration tests against a real Postgres (needs Docker)              |
-| `pnpm build`                              | Build the API bundle and the web app                                  |
-| `pnpm openapi`                            | Write `apps/api/openapi.json` (CI fails if it is out of date)         |
-| `pnpm --filter @app/server dev:worker`    | Run the API in the local Workers runtime                              |
-| `pnpm env:pull`                           | Copy `dev.env` from the secrets repo (`../secrets/<name>/`) to `.env` |
-| `pnpm secrets:push`                       | Upload `prod.env` from the secrets repo to the Worker as secrets      |
+| Command                                   | What it does                                                            |
+| ----------------------------------------- | ----------------------------------------------------------------------- |
+| `pnpm dev`                                | API and web with hot reload                                             |
+| `docker compose up -d`                    | Postgres + migrations + Mailpit                                         |
+| `docker compose --profile app up --build` | Everything in Docker, like production, on http://localhost:8080         |
+| `pnpm lint` / `pnpm format`               | Biome check / fix                                                       |
+| `pnpm typecheck`                          | TypeScript in every package                                             |
+| `pnpm test`                               | Integration tests against a real Postgres (needs Docker)                |
+| `pnpm build`                              | Build the API bundle and the web app                                    |
+| `pnpm openapi`                            | Write `apps/api/openapi.json` (CI fails if it is out of date)           |
+| `pnpm --filter @app/server dev:worker`    | Run the API in the local Workers runtime                                |
+| `pnpm env:pull`                           | Copy `local.env` from the secrets repo (`../secrets/<name>/`) to `.env` |
+| `pnpm secrets:push`                       | Upload `prod.env` from the secrets repo to the Worker as secrets        |
 
 ## Layout
 

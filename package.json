@@ -15,7 +15,9 @@
     "format": "biome check --write .",
     "openapi": "pnpm --filter @app/server openapi",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "env:pull": "node scripts/secrets.ts pull",
+    "secrets:push": "node scripts/secrets.ts push"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.8",

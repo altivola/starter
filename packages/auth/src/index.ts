@@ -12,6 +12,9 @@ export type AuthOptions = {
   sendEmail: SendEmail
   google?: { clientId: string; clientSecret: string }
   github?: { clientId: string; clientSecret: string }
+  // Headers that carry the real client IP, used for rate limiting.
+  // Behind nginx: x-forwarded-for. On Cloudflare: cf-connecting-ip.
+  ipAddressHeaders?: string[]
 }
 
 export function createAuth(options: AuthOptions) {
@@ -19,6 +22,9 @@ export function createAuth(options: AuthOptions) {
     secret: options.secret,
     baseURL: options.baseURL,
     trustedOrigins: [options.baseURL],
+    advanced: {
+      ipAddress: { ipAddressHeaders: options.ipAddressHeaders ?? ['x-forwarded-for'] },
+    },
     database: {
       dialect: new PostgresJSDialect({ postgres: options.sql }),
       type: 'postgres',

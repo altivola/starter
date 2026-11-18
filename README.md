@@ -96,7 +96,7 @@ First deploy of a new project, from `apps/api`:
 
 1. `pnpm exec wrangler login`
 2. Create a Neon project (region closest to your users) and copy its direct connection string (pooling off).
-3. `pnpm exec wrangler hyperdrive create <name>-db --connection-string="<neon url>"` and put the id in `wrangler.jsonc`.
+3. `pnpm exec wrangler hyperdrive create <name>-db --caching-disabled --connection-string="<neon url>"` and put the id in `wrangler.jsonc`. Keep caching off: cached reads return stale sessions and break rate limiting.
 4. `pnpm exec wrangler queues create <name>-jobs` and use that name in `wrangler.jsonc`.
 5. Run the migrations on Neon:
    `docker run --rm -v "$PWD/../../packages/db/migrations:/migrations:ro" -e DATABASE_URL="<neon url>" ghcr.io/amacneil/dbmate:2 --no-dump-schema --migrations-dir /migrations up`

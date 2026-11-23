@@ -1,0 +1,21 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "auth",
+  "main": "src/cloudflare/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Dedicated Altivola Auth database. Keep Hyperdrive caching disabled.
+      "id": "fe245b12a4944de5b20d23f2b05e9578",
+      "localConnectionString": "postgres://app:app@localhost:5432/hub"
+    }
+  ],
+  "vars": {
+    "AUTH_MODE": "hub",
+    "BETTER_AUTH_URL": "https://auth.altivola.workers.dev",
+    "MAIL_PROVIDER": "none"
+  }
+}

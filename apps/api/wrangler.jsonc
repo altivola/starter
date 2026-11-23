@@ -5,7 +5,8 @@
   "name": "starter",
   "main": "src/cloudflare/worker.ts",
   "compatibility_date": "2026-11-01",
-  "compatibility_flags": ["nodejs_compat"],
+  // Altivola Auth is a separate Worker on the same workers.dev zone.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "observability": { "enabled": true },
 
   // The built web app. Only /api and /rpc reach the Worker code; every other path is a

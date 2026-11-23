@@ -20,6 +20,10 @@ export const Env = z.object({
   GOOGLE_CLIENT_SECRET: optional,
   GITHUB_CLIENT_ID: optional,
   GITHUB_CLIENT_SECRET: optional,
+  AUTH_MODE: z.enum(['app', 'hub']).default('app'),
+  ALTIVOLA_AUTH_ISSUER: optional.pipe(z.url().optional()),
+  ALTIVOLA_AUTH_CLIENT_ID: optional,
+  ALTIVOLA_AUTH_CLIENT_SECRET: optional,
   SENTRY_DSN: optional,
 })
 
@@ -34,13 +38,32 @@ export function parseEnv(source: Record<string, string | undefined>): Env {
   if (env.MAIL_PROVIDER === 'resend' && !env.RESEND_API_KEY) {
     throw new Error('RESEND_API_KEY is required when MAIL_PROVIDER=resend')
   }
+  const {
+    ALTIVOLA_AUTH_ISSUER: issuer,
+    ALTIVOLA_AUTH_CLIENT_ID: clientId,
+    ALTIVOLA_AUTH_CLIENT_SECRET: clientSecret,
+  } = env
+  if (issuer || clientId || clientSecret) {
+    if (!issuer || !clientId || !clientSecret || env.AUTH_MODE === 'hub') {
+      throw new Error('Set all three ALTIVOLA_AUTH variables on an app deployment')
+    }
+    const url = new URL(issuer)
+    const local = url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+    if ((!local && url.protocol !== 'https:') || ![url.origin, `${url.origin}/`].includes(issuer)) {
+      throw new Error('ALTIVOLA_AUTH_ISSUER must be an HTTPS origin, or a local HTTP origin for development')
+    }
+  }
   return env
 }
 
 export function enabledProviders(env: Env): AuthProvider[] {
   const providers = oauthProviders(env)
   const oauth = (['google', 'github'] as const).filter((name) => providers[name])
-  return env.MAIL_PROVIDER === 'none' ? oauth : ['email', ...oauth]
+  return [
+    ...(env.MAIL_PROVIDER === 'none' ? [] : (['email'] as const)),
+    ...oauth,
+    ...(providers.altivola ? (['altivola'] as const) : []),
+  ]
 }
 
 export function oauthProviders(env: Env) {
@@ -48,6 +71,14 @@ export function oauthProviders(env: Env) {
     google:
       env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
         ? { clientId: env.GOOGLE_CLIENT_ID, clientSecret: env.GOOGLE_CLIENT_SECRET }
+        : undefined,
+    altivola:
+      env.ALTIVOLA_AUTH_ISSUER && env.ALTIVOLA_AUTH_CLIENT_ID && env.ALTIVOLA_AUTH_CLIENT_SECRET
+        ? {
+            issuer: new URL(env.ALTIVOLA_AUTH_ISSUER).origin,
+            clientId: env.ALTIVOLA_AUTH_CLIENT_ID,
+            clientSecret: env.ALTIVOLA_AUTH_CLIENT_SECRET,
+          }
         : undefined,
     github:
       env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET

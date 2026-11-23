@@ -12,7 +12,7 @@ export const router = {
     }),
   authProviders: pub
     .route({ method: 'GET', path: '/auth-providers', summary: 'Sign in methods turned on', tags: ['system'] })
-    .output(z.array(z.enum(['email', 'google', 'github'])))
+    .output(z.array(z.enum(['email', 'google', 'github', 'altivola'])))
     .handler(({ context }) => context.authProviders),
   notes,
 }

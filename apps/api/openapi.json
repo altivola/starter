@@ -57,7 +57,8 @@
                     "enum": [
                       "email",
                       "google",
-                      "github"
+                      "github",
+                      "altivola"
                     ],
                     "type": "string"
                   }

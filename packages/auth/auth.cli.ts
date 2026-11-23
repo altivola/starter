@@ -1,7 +1,7 @@
 import { createSql } from '@app/db'
-import { createAuth } from './src/index.ts'
+import { createHubAuth } from './src/index.ts'
 
-export const auth = createAuth({
+export const auth = createHubAuth({
   sql: createSql(process.env.DATABASE_URL ?? ''),
   secret: 'cli-only-secret-cli-only-secret-32',
   baseURL: 'http://localhost:5173',

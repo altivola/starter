@@ -12,7 +12,7 @@ export type Context = {
   authProviders: AuthProvider[]
 }
 
-export type AuthProvider = 'email' | 'google' | 'github'
+export type AuthProvider = 'email' | 'google' | 'github' | 'altivola'
 
 export const pub = os.$context<Context>()
 

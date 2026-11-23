@@ -119,3 +119,69 @@ Sign in stays passwordless (magic link or OAuth) because the free Workers plan a
 ## Brand
 
 Black, yellow `#FAFB03`, and white. Yellow is only used as a fill behind black text (`highlight` class, primary buttons in dark mode), never as text on white. Tokens live in `packages/ui/tokens.css`.
+
+## Altivola sign-in
+
+Altivola Auth is an OpenID Connect provider built from this repo. It runs as a
+separate Worker with its own PostgreSQL database, Better Auth secret and sign-in
+session. Starter and other apps issue their own local sessions after a
+successful authorization code exchange. Opening another participating app can
+reuse the hub session. Sign out from the hub home page to end the central session.
+Each app manages its existing local sessions.
+
+### Set up the hub
+
+1. Pick the hub origin before registering any apps. The Worker config uses
+   `https://auth.altivola.workers.dev`. Create a dedicated PostgreSQL database,
+   run the migrations under `packages/db/migrations` against it, and point a
+   dedicated Hyperdrive binding at it.
+2. Set the dedicated Hyperdrive ID in `apps/api/wrangler.auth.jsonc` for the target account. Keep caching disabled.
+   Set an independent `BETTER_AUTH_SECRET` for that Worker. Configure one OAuth
+   app in each provider console using these callbacks:
+
+   | Provider | Callback                                                     |
+   | -------- | ------------------------------------------------------------ |
+   | Google   | `https://auth.altivola.workers.dev/api/auth/callback/google` |
+   | GitHub   | `https://auth.altivola.workers.dev/api/auth/callback/github` |
+
+   Store the corresponding `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+   `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` as Worker secrets. Enable
+   email sign-in separately if needed. Use `MAIL_PROVIDER=resend`,
+   `MAIL_FROM` and `RESEND_API_KEY` for production. For local testing use
+   `AUTH_MODE=hub`, a separate `BETTER_AUTH_URL`, `DATABASE_URL` and
+   `BETTER_AUTH_SECRET`, and run `node apps/api/src/node.ts` with Mailpit.
+3. From `apps/api`, deploy the hub with
+   `pnpm exec wrangler deploy --config wrangler.auth.jsonc`. Use the same
+   `--config` when setting hub secrets. Check that
+   `/.well-known/openid-configuration` reports the hub origin as its issuer.
+
+Altivola Starter CI also deploys the Auth Worker when `auth/prod.env` is
+available in the private secrets repo. The hub has its own database URL and
+signing secret. CI takes the shared Google and GitHub credentials from
+`starter/prod.env`.
+
+### Connect an app
+
+Run the following with `DATABASE_URL` pointing at the hub database. Register each
+app and each environment separately. The command prints the app's credentials
+once, and the hub stores a hash of the secret.
+
+```sh
+node packages/auth/register-client.ts 'Altivola Starter' \
+  https://starter.altivola.workers.dev/api/auth/callback/altivola
+```
+
+Set `ALTIVOLA_AUTH_ISSUER=https://auth.altivola.workers.dev` and the printed
+`ALTIVOLA_AUTH_CLIENT_ID` and `ALTIVOLA_AUTH_CLIENT_SECRET` in the app's server
+environment. Starter then shows **Continue with Google** and **Continue with GitHub**. The selected
+provider starts through the hub automatically. Configure both social providers
+on the hub to enable both buttons. Starter uses its own configured login methods
+when the hub is disabled. Better Auth can
+link an existing account when both the local and provider emails are verified.
+
+The registration command is for first-party apps. It allows only the supplied
+callback URLs, requires PKCE, and skips consent. Keep the app secret on its
+server. Each new app adds a client to the hub, with no new Google or GitHub
+callback entries. To pause a client, set its `"disabled"` flag in the hub's
+`"oauthClient"` table. To replace credentials, register a new client, update
+the app, then disable the old client.

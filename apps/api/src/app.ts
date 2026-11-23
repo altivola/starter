@@ -38,10 +38,11 @@ export function createApp(deps: Deps) {
   })
 
   const app = new Hono()
-  app.use(logger(), secureHeaders(), csrf({ origin }))
-
+  app.use(secureHeaders(), csrf({ origin }))
+  // OAuth callbacks carry one-time codes in the query string.
   app.on(['GET', 'POST'], '/api/auth/*', (c) => context.auth.handler(c.req.raw))
 
+  app.use(logger())
   app.use('/rpc/*', async (c, next) => {
     const { matched, response } = await rpc.handle(c.req.raw, {
       prefix: '/rpc',

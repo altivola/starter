@@ -58,6 +58,7 @@ jobs:
           repository: altivola/secrets
           token: ${{ secrets.SECRETS_REPO_TOKEN }}
           path: .secrets
+          persist-credentials: false
 
       - name: Load deploy settings
         run: |
@@ -93,8 +94,28 @@ jobs:
           echo "::add-mask::$url"
           pnpm exec wrangler hyperdrive update "$id" --connection-string="$url" > /dev/null
 
-      - name: Deploy the Worker (web + API)
-        run: pnpm --filter @app/server run deploy
+      - name: Deploy Altivola Auth
+        if: github.repository == 'altivola/starter'
+        run: |
+          file=.secrets/auth/prod.env
+          if [ ! -f "$file" ]; then
+            echo "Auth production settings are unavailable"
+            exit 0
+          fi
+          database_url=$(grep '^NEON_DATABASE_URL=' "$file" | head -1 | cut -d= -f2-)
+          [ -n "$database_url" ]
+          echo "::add-mask::$database_url"
+          docker run --rm -v "$PWD/packages/db/migrations:/migrations:ro" -e DATABASE_URL="$database_url" \
+            ghcr.io/amacneil/dbmate:2 --wait --no-dump-schema --migrations-dir /migrations up
+          config=apps/api/wrangler.auth.jsonc
+          id=$(grep -oE '"id": *"[0-9a-f]{32}"' "$config" | grep -oE '[0-9a-f]{32}')
+          url=$(node -e 'const u = new URL(process.argv[1]); u.searchParams.delete("channel_binding"); console.log(u.toString())' "$database_url")
+          echo "::add-mask::$url"
+          pnpm --filter @app/server exec wrangler hyperdrive update "$id" --connection-string="$url" > /dev/null
+          SECRETS_DIR="$PWD/.secrets/auth" node scripts/secrets.ts deploy-auth
 
-      - name: Upload Worker secrets
-        run: pnpm secrets:push
+      - name: Build web assets
+        run: pnpm --filter @app/web build
+
+      - name: Deploy the Worker and its secrets
+        run: node scripts/secrets.ts deploy

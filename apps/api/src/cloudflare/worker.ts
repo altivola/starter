@@ -4,12 +4,13 @@ import { createAuth } from '@app/auth'
 import { createSql, type Sql } from '@app/db'
 import { createApp } from '../app.ts'
 import { enabledProviders, oauthProviders, parseEnv } from '../env.ts'
+import { createHub } from '../hub.ts'
 import { createMailer } from '../mailer.ts'
 import { createQueueJobs, type JobMessage, runQueueBatch } from './queues.ts'
 
 type Bindings = {
   HYPERDRIVE: Hyperdrive
-  JOBS: Queue<JobMessage>
+  JOBS?: Queue<JobMessage>
   [key: string]: unknown
 }
 
@@ -35,28 +36,38 @@ const sql = new Proxy((() => {}) as unknown as Sql, {
   },
 })
 
-let app: ReturnType<typeof createApp> | undefined
+let app: ReturnType<typeof createApp> | ReturnType<typeof createHub> | undefined
 
-function getApp(bindings: Bindings) {
+async function getApp(bindings: Bindings) {
   if (app) return app
   const vars = Object.fromEntries(Object.entries(bindings).filter(([, v]) => typeof v === 'string')) as Record<
     string,
     string
   >
   const env = parseEnv({ ...vars, DATABASE_URL: bindings.HYPERDRIVE.connectionString })
-  app = createApp({
+  if (env.AUTH_MODE === 'hub') {
+    app = createHub(env, sql, ['cf-connecting-ip'])
+    return app
+  }
+
+  if (!bindings.JOBS) throw new Error('The app deployment needs the JOBS binding')
+  const auth = createAuth({
+    sql,
+    secret: env.BETTER_AUTH_SECRET,
+    baseURL: env.BETTER_AUTH_URL,
+    sendEmail: createMailer(env),
+    ipAddressHeaders: ['cf-connecting-ip'],
+    ...oauthProviders(env),
+  })
+  // Discovery performs network I/O. Cache only after the initiating request finishes it,
+  // so a concurrent Worker request never waits on another request's I/O.
+  await auth.$context
+  app ??= createApp({
     origin: env.BETTER_AUTH_URL,
     authProviders: enabledProviders(env),
     sql,
     jobs: createQueueJobs(bindings.JOBS),
-    auth: createAuth({
-      sql,
-      secret: env.BETTER_AUTH_SECRET,
-      baseURL: env.BETTER_AUTH_URL,
-      sendEmail: createMailer(env),
-      ipAddressHeaders: ['cf-connecting-ip'],
-      ...oauthProviders(env),
-    }),
+    auth,
   })
   return app
 }
@@ -74,7 +85,7 @@ function withRequestSql<T>(bindings: Bindings, ctx: ExecutionContext, fn: () => 
 
 export default {
   fetch(request, bindings, ctx) {
-    return withRequestSql(bindings, ctx, async () => getApp(bindings).fetch(request))
+    return withRequestSql(bindings, ctx, async () => (await getApp(bindings)).fetch(request))
   },
 
   queue(batch, bindings, ctx) {

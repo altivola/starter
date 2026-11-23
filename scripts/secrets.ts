@@ -1,6 +1,8 @@
 // Reads env values from my private secrets repo (Repo/Personal/secrets/<project>/).
 //   node scripts/secrets.ts pull   copies local.env to .env
 //   node scripts/secrets.ts push   uploads prod.env to the Cloudflare Worker as secrets
+//   node scripts/secrets.ts deploy  deploys the built Worker and its secrets together
+//   node scripts/secrets.ts deploy-auth  deploys the central Auth Worker from auth/prod.env
 // Set SECRETS_DIR to use another folder.
 import { spawnSync } from 'node:child_process'
 import { chmodSync, copyFileSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
@@ -40,8 +42,16 @@ if (command === 'pull') {
   copyFileSync(need('local.env'), target)
   chmodSync(target, 0o600)
   console.info(`Wrote .env from ${join(dir, 'local.env')}. Restart pnpm dev to use it.`)
-} else if (command === 'push') {
+} else if (command === 'push' || command === 'deploy' || command === 'deploy-auth') {
   const values = parseEnv(readFileSync(need('prod.env'), 'utf8'))
+  if (command === 'deploy-auth') {
+    const upstream = parseEnv(readFileSync(join(dir, '..', 'starter', 'prod.env'), 'utf8'))
+    for (const name of ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GITHUB_CLIENT_ID', 'GITHUB_CLIENT_SECRET']) {
+      const value = upstream[name]
+      if (!value) throw new Error(`Missing ${name} for Altivola Auth`)
+      values[name] = value
+    }
+  }
   const secrets = Object.fromEntries(
     Object.entries(values).filter(([key, value]) => value && !NOT_WORKER_SECRETS.has(key)),
   )
@@ -49,14 +59,19 @@ if (command === 'pull') {
   const file = join(tmp, 'secrets.json')
   try {
     writeFileSync(file, JSON.stringify(secrets), { mode: 0o600 })
-    console.info(`Uploading ${Object.keys(secrets).join(', ')}`)
+    console.info(`Using Worker secrets: ${Object.keys(secrets).join(', ')}`)
     const wrangler = join(root, 'apps/api/node_modules/.bin/wrangler')
-    const result = spawnSync(wrangler, ['secret', 'bulk', file], { cwd: join(root, 'apps/api'), stdio: 'inherit' })
+    const config = command === 'deploy-auth' ? 'wrangler.auth.jsonc' : 'wrangler.jsonc'
+    const args =
+      command === 'push'
+        ? ['secret', 'bulk', file]
+        : ['deploy', '--config', config, '--keep-vars', '--secrets-file', file]
+    const result = spawnSync(wrangler, args, { cwd: join(root, 'apps/api'), stdio: 'inherit' })
     process.exitCode = result.status ?? 1
   } finally {
     rmSync(tmp, { recursive: true, force: true })
   }
 } else {
-  console.error('Usage: node scripts/secrets.ts <pull|push>')
+  console.error('Usage: node scripts/secrets.ts <pull|push|deploy|deploy-auth>')
   process.exit(1)
 }

@@ -19,13 +19,15 @@ export const loginRoute = createRoute({
   component: LoginPage,
 })
 
+const socialProviders = ['google', 'github'] as const
 const providerLabels = { google: 'Google', github: 'GitHub' } as const
 
 function LoginPage() {
   const [email, setEmail] = useState('')
   const providers = useQuery(orpc.authProviders.queryOptions())
-  const emailEnabled = providers.data?.includes('email') ?? false
-  const oauthProviders = providers.data?.filter((p) => p !== 'email') ?? []
+  const useHub = providers.data?.includes('altivola') ?? false
+  const emailEnabled = !useHub && (providers.data?.includes('email') ?? false)
+  const oauthProviders = socialProviders.filter((provider) => useHub || providers.data?.includes(provider))
 
   const magicLink = useMutation({
     mutationFn: async () => {
@@ -33,6 +35,25 @@ function LoginPage() {
       if (error) throw new Error(error.message ?? 'Could not send the link')
     },
   })
+
+  const oauth = useMutation({
+    mutationFn: async (provider: keyof typeof providerLabels) => {
+      const { data, error } = await authClient.signIn.social({
+        provider: useHub ? 'altivola' : provider,
+        callbackURL: '/',
+        errorCallbackURL: '/login',
+        disableRedirect: useHub,
+      })
+      if (error) throw new Error(error.message ?? 'Could not start sign in')
+      if (useHub) {
+        if (!data?.url) throw new Error('Could not start sign in')
+        const authorize = new URL(data.url)
+        authorize.searchParams.set('altivola_provider', provider)
+        window.location.assign(authorize)
+      }
+    },
+  })
+  const callbackFailed = new URLSearchParams(window.location.search).has('error')
 
   return (
     <Card className="mx-auto mt-12 max-w-sm">
@@ -83,12 +104,18 @@ function LoginPage() {
           </form>
         )}
 
+        {(oauth.error || callbackFailed) && (
+          <p role="alert" className="text-sm text-destructive">
+            {oauth.error?.message ?? 'Sign in could not be completed. Please try again.'}
+          </p>
+        )}
         {oauthProviders.map((provider) => (
           <Button
             key={provider}
             variant="outline"
             className="w-full"
-            onClick={() => authClient.signIn.social({ provider, callbackURL: '/' })}
+            disabled={oauth.isPending}
+            onClick={() => oauth.mutate(provider)}
           >
             Continue with {providerLabels[provider]}
           </Button>

@@ -18,3 +18,5 @@
 - Free phase login is passwordless (magic link, OAuth). Do not add password login without moving off the free Workers plan.
 - UI: shadcn/ui components in `apps/web/src/components/ui`, brand tokens in `packages/ui/tokens.css`. Yellow is a fill behind black text, never text on white.
 - Docs, comments, and commit messages are in plain, simple English. No em dashes.
+- Commit messages use conventional commits: `feat: ...`, `fix(scope): ...`, `chore: ...`, `ci: ...`, `docs: ...`, lowercase after the colon.
+- Before ending a session, stop every dev server, preview, browser session and test container you started, and make sure no audio is still playing.
